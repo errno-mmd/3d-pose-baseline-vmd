@@ -14,8 +14,67 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def add_invisible_leg(xyc):
+    x = [0.0 for i in range(18)]
+    y = [0.0 for i in range(18)]
+    c = [0.0 for i in range(18)]
+    for i in range(18):
+        x[i] = xyc[i*3+0]
+        y[i] = xyc[i*3+1]
+        c[i] = xyc[i*3+2]
 
-def read_openpose_json(openpose_output_dir, idx, is_debug=False):
+    spine_l_len = np.sqrt((x[1] - x[11])**2 + (y[1] - y[11])**2) if c[1] > 0 and c[11] > 0 else 0.0
+    spine_r_len = np.sqrt((x[1] - x[8])**2 + (y[1] - y[8])**2) if c[1] > 0 and c[8] > 0 else 0.0
+    clavicle_l_len = np.sqrt((x[1] - x[5])**2 + (y[1] - y[5])**2) if c[1] > 0 and c[5] > 0 else 0.0
+    clavicle_r_len = np.sqrt((x[1] - x[2])**2 + (y[1] - y[2])**2) if c[1] > 0 and c[2] > 0 else 0.0
+    if spine_l_len > 0 or spine_r_len > 0:
+        spine_len = max(spine_l_len, spine_r_len)
+    else:
+        spine_len = max(clavicle_l_len * 4, clavicle_r_len * 4)
+    if spine_len == 0.0:
+        return
+
+    th_conf = 0.1
+    conf = 0.1
+
+    # LHip
+    if c[11] < th_conf:
+        x[11] = (x[1] + x[5]) / 2
+        y[11] = y[1] + spine_len
+        c[11] = conf
+    # LKnee
+    if c[12] < th_conf:
+        x[12] = x[11]
+        y[12] = y[11] + spine_len * 0.8
+        c[12] = conf
+    # LAnkle
+    if c[13] < th_conf:
+        x[13] = x[12]
+        y[13] = y[12] + spine_len * 0.8
+        c[13] = conf
+    # RHip
+    if c[8] < th_conf:
+        x[8] = (x[1] + x[2]) / 2
+        y[8] = y[1] + spine_len
+        c[8] = conf
+    # RKnee
+    if c[9] < th_conf:
+        x[9] = x[8]
+        y[9] = y[8] + spine_len * 0.8
+        c[9] = conf
+    # RAnkle
+    if c[10] < th_conf:
+        x[10] = x[9]
+        y[10] = y[9] + spine_len * 0.8
+        c[10] = conf
+
+    for i in range(18):
+        xyc[i*3+0] = x[i]
+        xyc[i*3+1] = y[i]
+        xyc[i*3+2] = c[i]
+
+
+def read_openpose_json(openpose_output_dir, idx, is_debug=False, add_leg=False):
     if is_debug == True:
         logger.setLevel(logging.DEBUG)
 
@@ -44,8 +103,11 @@ def read_openpose_json(openpose_output_dir, idx, is_debug=False):
         if not os.path.isfile(_file): raise Exception("No file found!!, {0}".format(_file))
         data = json.load(open(_file))
 
+        if add_leg == True:
+            add_invisible_leg(data["people"][idx]["pose_keypoints_2d"])
+
         # 12桁の数字文字列から、フレームINDEX取得
-        frame_idx = int(re.findall("(\d{12})", file_name)[0])
+        frame_idx = int(re.findall(r"(\d{12})", file_name)[0])
         
         if frame_idx <= 0 or is_started == False:
             # 開始したらフラグを立てる
@@ -62,7 +124,7 @@ def read_openpose_json(openpose_output_dir, idx, is_debug=False):
             xy.append(_data[o])
             xy.append(_data[o+1])
             confidence.append(_data[o+2])
-        
+
         logger.debug("found {0} for frame {1}".format(xy, str(frame_idx)))
         #add xy to frame
         cache[frame_idx] = xy
@@ -93,7 +155,14 @@ def read_openpose_json(openpose_output_dir, idx, is_debug=False):
     last_frame = [start_frame_index-1 for i in range(18)]
 
     # threshold of confidence
-    confidence_th = 0.3
+    confidence_th = [0.3 for i in range(18)]
+    for i in range(18):
+        confidence_max = 0.0
+        for j in range(len(json_files)):
+            if cache_confidence[j][i] > confidence_max:
+                confidence_max = cache_confidence[j][i]
+        if confidence_max < 0.6:
+            confidence_th[i] = confidence_max / 2
 
     ### smooth by median value, n frames 
     for frame, xy in cache.items():
@@ -122,7 +191,7 @@ def read_openpose_json(openpose_output_dir, idx, is_debug=False):
             x_v = []
             y_v = []
             for neighbor in range(smooth_start_frame, smooth_end_frame + 1):
-                if cache_confidence[neighbor][joint_no] >= confidence_th:
+                if cache_confidence[neighbor][joint_no] >= confidence_th[joint_no]:
                     x_v.append(cache[neighbor][x])
                     y_v.append(cache[neighbor][y])
 

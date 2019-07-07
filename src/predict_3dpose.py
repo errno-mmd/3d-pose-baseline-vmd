@@ -65,6 +65,7 @@ tf.app.flags.DEFINE_integer("load", 0, "Try to load a previous checkpoint.")
 
 # Misc
 tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32.")
+tf.app.flags.DEFINE_boolean("add_leg", False, "Add invisible leg joints")
 
 FLAGS = tf.app.flags.FLAGS
 
