@@ -251,7 +251,7 @@ def read_openpose_json(openpose_output_dir, idx, is_debug=False, add_leg=False):
         # 顔と耳のX位置を補正する
         joints = [(16, 1, 17, 17), (17, 1, 16, 16), (0, 1, 16, 17)]
         for (fromj, tojx, tojy1, tojy2) in joints:
-            if cache_confidence[frame + start_frame_index][fromj] < confidence_th:
+            if cache_confidence[frame + start_frame_index][fromj] < confidence_th[fromj]:
                 # Fromが取れてない場合、Toから引っ張ってくる
                 smoothed[frame][fromj*2] = smoothed[frame][tojx*2]
                 smoothed[frame][fromj*2+1] = (smoothed[frame][tojy1*2+1] + smoothed[frame][tojy2*2+1]) / 2
