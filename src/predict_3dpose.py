@@ -69,27 +69,7 @@ tf.app.flags.DEFINE_boolean("use_fp16", False, "Train using fp16 instead of fp32
 FLAGS = tf.app.flags.FLAGS
 
 # Windows用にディレクトリ階層を簡略化
-train_dir = os.path.join( FLAGS.train_dir,
-  FLAGS.action,
-  'dropout_{0}'.format(FLAGS.dropout),
-  'epochs_{0}'.format(FLAGS.epochs) if FLAGS.epochs > 0 else '',
-  'lr_{0}'.format(FLAGS.learning_rate),
-  'residual' if FLAGS.residual else 'nr',
-  # 'residual' if FLAGS.residual else 'not_residual',
-  'depth_{0}'.format(FLAGS.num_layers),
-  'ls{0}'.format(FLAGS.linear_size),
-  # 'linear_size{0}'.format(FLAGS.linear_size),
-  'bs{0}'.format(FLAGS.batch_size),
-  # 'batch_size_{0}'.format(FLAGS.batch_size),
-  'procrustes' if FLAGS.procrustes else 'np',
-  # 'procrustes' if FLAGS.procrustes else 'no_procrustes',
-  'maxnorm' if FLAGS.max_norm else 'nm',
-  # 'maxnorm' if FLAGS.max_norm else 'no_maxnorm',
-  'batch_normalization' if FLAGS.batch_norm else 'nbn',
-  # 'batch_normalization' if FLAGS.batch_norm else 'no_batch_normalization',
-  'use_stacked_hourglass' if FLAGS.use_sh else 'nsh',
-  # 'use_stacked_hourglass' if FLAGS.use_sh else 'not_stacked_hourglass',
-  'predict_14' if FLAGS.predict_14 else 'predict_17')
+train_dir = os.path.join( FLAGS.train_dir )
 
 #print( train_dir )
 summaries_dir = os.path.join( train_dir, "log" ) # Directory for TB summaries
