@@ -158,7 +158,8 @@ def read_openpose_json(openpose_output_dir, idx, is_debug=False, add_leg=False):
     confidence_th = [0.3 for i in range(18)]
     for i in range(18):
         confidence_max = 0.0
-        for j in range(len(json_files)):
+        for j in range(start_frame_index, end_frame_index + 1):
+            logger.debug("i = {0}, j = {1}".format(i, j))
             if cache_confidence[j][i] > confidence_max:
                 confidence_max = cache_confidence[j][i]
         if confidence_max < 0.6:
